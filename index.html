@@ -1098,10 +1098,10 @@ class TetrisScene extends BaseScene {
     ensureLogoTexture(T).then((tex) => {
       if (this._disposed) return;
       const panel = makeLogoPanel(T, tex, {
-        size: 20, additive: false, opacity: 0.32,
+        size: 11, additive: false, opacity: 0.42,
         halo: true, haloColor: 0x6366F1, haloScale: 1.35, haloOpacity: 0.55,
       });
-      panel.position.set(0, this.bottomY + 5.0, -13);
+      panel.position.set(0, this.bottomY + 12.0, -13);
       env.add(panel);
       this._logoPanel = panel;
       if (!this._running) this.renderOnce();
@@ -1164,7 +1164,7 @@ class TetrisScene extends BaseScene {
     }
     if (this._horizonMat) this._horizonMat.opacity = 0.42 + Math.sin(time * 1.1) * 0.12;
     if (this._logoPanel) {
-      this._logoPanel.position.y = this.bottomY + 5.0 + Math.sin(time * 0.5) * 0.25;
+      this._logoPanel.position.y = this.bottomY + 12.0 + Math.sin(time * 0.5) * 0.25;
       const op = 0.30 + Math.sin(time * 0.8) * 0.06;
       if (this._logoPanel._quadMat) this._logoPanel._quadMat.opacity = op;
     }
