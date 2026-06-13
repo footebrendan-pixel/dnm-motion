@@ -4,9 +4,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DNM Motion Showcase — Naming Tetris, Stream, Order from Chaos</title>
+<link rel="icon" href="./dnm-logo.png" type="image/png" />
 <style>
   :root {
-    --dnm-bg-0: #14161c;
+    --dnm-bg-0: #0e0f14;
     --dnm-bg-1: #1f2430;
     --dnm-indigo: #4338CA;
     --dnm-indigo-hi: #6366F1;
@@ -51,32 +52,75 @@
     margin: 0 auto;
     max-width: 620px;
   }
+
+  /* ---- section is a 2-column grid: copy column | canvas column ----
+     The canvas lives in its own grid track so it can never sit under the
+     text. On narrow screens the grid collapses to one column and the copy
+     stacks ABOVE the canvas (still no overlap). ---- */
   .dnm-section {
     position: relative;
     width: 100%;
-    height: 70vh;
-    min-height: 480px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    min-height: 560px;
+    height: 78vh;
+    display: grid;
+    grid-template-columns: minmax(300px, 38%) 1fr;
+    align-items: center;
     overflow: hidden;
-    border-top: 1px solid rgba(255,255,255,0.05);
-    background:
-      radial-gradient(120% 90% at 50% -10%, rgba(67,56,202,0.10), transparent 60%),
-      linear-gradient(180deg, var(--dnm-bg-0), var(--dnm-bg-1));
+    border-top: 1px solid rgba(255,255,255,0.06);
+    background: var(--dnm-bg-0);
   }
+  /* distinct deep-gradient sky per scene (canvas draws over most of it,
+     but the edges/vignette read through and keep each page on-brand) */
+  .dnm-section.scene-tetris {
+    background:
+      radial-gradient(120% 80% at 50% 120%, rgba(67,56,202,0.22), transparent 55%),
+      radial-gradient(90% 70% at 50% -10%, rgba(99,102,241,0.10), transparent 60%),
+      linear-gradient(180deg, #0b0c11 0%, #14161c 60%, #0d0e13 100%);
+  }
+  .dnm-section.scene-stream {
+    background:
+      radial-gradient(80% 90% at 50% 50%, rgba(67,56,202,0.20), transparent 60%),
+      linear-gradient(180deg, #0a0b10 0%, #12141b 55%, #0a0b10 100%);
+  }
+  .dnm-section.scene-burst {
+    background:
+      radial-gradient(70% 70% at 50% 45%, rgba(99,102,241,0.16), transparent 62%),
+      radial-gradient(120% 120% at 50% 50%, rgba(67,56,202,0.10), transparent 55%),
+      linear-gradient(180deg, #08090d 0%, #101218 55%, #08090d 100%);
+  }
+
+  /* the 3D canvas spans BOTH columns and fills the section as a backdrop;
+     the copy column then floats above its left portion with its own z-index.
+     This keeps the flashy art edge-to-edge while guaranteeing the heading
+     has dedicated, art-light real estate on the left. */
   .dnm-stage {
     position: absolute;
     inset: 0;
     z-index: 0;
   }
   .dnm-stage canvas { display: block; }
+
+  /* soft cinematic vignette + a left-side scrim so copy always stays legible
+     over whatever the canvas renders behind it */
+  .dnm-section::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(8,9,13,0.82) 0%, rgba(8,9,13,0.55) 26%, rgba(8,9,13,0.0) 52%),
+      radial-gradient(130% 120% at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%);
+  }
+
   .dnm-overlay {
     position: relative;
     z-index: 2;
+    grid-column: 1;
+    justify-self: start;
     pointer-events: none;
-    padding: 36px clamp(24px, 6vw, 84px);
-    max-width: 760px;
+    padding: 36px clamp(22px, 4vw, 64px);
+    max-width: 460px;
   }
   .dnm-overlay .tag {
     display: inline-block;
@@ -84,31 +128,65 @@
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--dnm-indigo-hi);
-    background: rgba(67,56,202,0.16);
-    border: 1px solid rgba(99,102,241,0.32);
+    background: rgba(67,56,202,0.20);
+    border: 1px solid rgba(99,102,241,0.38);
     padding: 5px 12px;
     border-radius: 999px;
     margin-bottom: 16px;
     font-weight: 600;
+    box-shadow: 0 0 22px rgba(99,102,241,0.25);
   }
   .dnm-overlay h2 {
-    font-size: clamp(24px, 3.4vw, 40px);
+    font-size: clamp(26px, 3.4vw, 42px);
     line-height: 1.06;
     margin: 0 0 12px;
     font-weight: 700;
     letter-spacing: -0.02em;
-    text-shadow: 0 2px 30px rgba(0,0,0,0.55);
+    text-shadow: 0 2px 30px rgba(0,0,0,0.7), 0 0 40px rgba(67,56,202,0.35);
   }
   .dnm-overlay p {
     font-size: clamp(14px, 1.5vw, 18px);
     line-height: 1.55;
     color: var(--dnm-text);
-    opacity: 0.92;
+    opacity: 0.94;
     margin: 0;
-    max-width: 480px;
-    text-shadow: 0 1px 20px rgba(0,0,0,0.6);
+    max-width: 420px;
+    text-shadow: 0 1px 20px rgba(0,0,0,0.8);
   }
   .dnm-overlay .accent { color: var(--dnm-indigo-hi); }
+
+  /* ---- responsive: stack copy above the canvas, never overlapping ---- */
+  @media (max-width: 860px) {
+    .dnm-section {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+      height: auto;
+      min-height: 620px;
+    }
+    .dnm-stage {
+      position: relative;
+      grid-row: 2;
+      grid-column: 1;
+      min-height: 440px;
+      width: 100%;
+    }
+    .dnm-overlay {
+      grid-row: 1;
+      grid-column: 1;
+      justify-self: center;
+      text-align: center;
+      max-width: 600px;
+      padding: 40px 24px 8px;
+    }
+    .dnm-overlay p { margin: 0 auto; }
+    /* scrim becomes a bottom fade so it doesn't darken the stacked copy */
+    .dnm-section::after {
+      background:
+        linear-gradient(180deg, rgba(8,9,13,0.0) 60%, rgba(8,9,13,0.5) 100%),
+        radial-gradient(130% 120% at 50% 60%, transparent 60%, rgba(0,0,0,0.5) 100%);
+    }
+  }
+
   .page-foot {
     max-width: 880px;
     margin: 0 auto;
@@ -126,9 +204,7 @@
     font-size: 13px;
   }
   @media (prefers-reduced-motion: reduce) {
-    .dnm-section { background:
-      radial-gradient(120% 90% at 50% -10%, rgba(67,56,202,0.12), transparent 60%),
-      linear-gradient(180deg, var(--dnm-bg-0), var(--dnm-bg-1)); }
+    .dnm-section { animation: none !important; }
   }
 </style>
 </head>
@@ -141,7 +217,7 @@
   </header>
 
   <!-- A) NAMING TETRIS (hero candidate) -->
-  <section class="dnm-section">
+  <section class="dnm-section scene-tetris">
     <div class="dnm-stage" data-dnm-motion="tetris"></div>
     <div class="dnm-overlay">
       <span class="tag">Variant A · the star</span>
@@ -151,7 +227,7 @@
   </section>
 
   <!-- B) NAMING STREAM -->
-  <section class="dnm-section">
+  <section class="dnm-section scene-stream">
     <div class="dnm-stage" data-dnm-motion="stream"></div>
     <div class="dnm-overlay">
       <span class="tag">Variant B</span>
@@ -161,7 +237,7 @@
   </section>
 
   <!-- C) ORDER FROM CHAOS -->
-  <section class="dnm-section">
+  <section class="dnm-section scene-burst">
     <div class="dnm-stage" data-dnm-motion="burst"></div>
     <div class="dnm-overlay">
       <span class="tag">Variant C</span>
@@ -185,8 +261,11 @@
    ===================================================================== */
 
 const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+const LOGO_URL = "./dnm-logo.png";   // same-origin: no canvas/texture taint
 
 let THREE = null;
+let _logoTex = null;          // shared, cached DNM logo texture (loaded once)
+let _logoPromise = null;
 
 /* ---------- brand palette ---------- */
 const C = {
@@ -234,6 +313,225 @@ async function ensureThree() {
   THREE = mod;
   try { window.THREE = mod; } catch (e) {}
   return THREE;
+}
+
+/* =====================================================================
+   SHARED ENVIRONMENT FX  —  the "maximum flashy" toolkit.
+   Fake-bloom via additive glow sprites + emissive materials (no
+   EffectComposer dependency → reliable everywhere). Brand-indigo grading.
+   ===================================================================== */
+
+/* Load the real DNM logo once, as a same-origin texture. Resolves even on
+   failure (texture may be null) so a scene never blocks/throws on it. */
+function ensureLogoTexture(THREE) {
+  if (_logoTex) return Promise.resolve(_logoTex);
+  if (_logoPromise) return _logoPromise;
+  _logoPromise = new Promise((resolve) => {
+    try {
+      const loader = new THREE.TextureLoader();
+      loader.setCrossOrigin("anonymous");
+      loader.load(
+        LOGO_URL,
+        (tex) => {
+          try {
+            tex.colorSpace = THREE.SRGBColorSpace;
+            tex.anisotropy = 4;
+            tex.generateMipmaps = true;
+            tex.minFilter = THREE.LinearMipmapLinearFilter;
+            tex.magFilter = THREE.LinearFilter;
+            tex.needsUpdate = true;
+          } catch (e) {}
+          _logoTex = tex;
+          resolve(tex);
+        },
+        undefined,
+        () => resolve(null)   // 404 / decode fail → null, scene still runs
+      );
+    } catch (e) { resolve(null); }
+  });
+  return _logoPromise;
+}
+
+/* Soft radial glow sprite texture (white core → transparent). Cached. */
+let _glowTex = null;
+function radialGlowTexture(THREE) {
+  if (_glowTex) return _glowTex;
+  const S = 256;
+  const cv = document.createElement("canvas");
+  cv.width = S; cv.height = S;
+  const ctx = cv.getContext("2d");
+  const g = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  g.addColorStop(0.0, "rgba(255,255,255,1)");
+  g.addColorStop(0.18, "rgba(214,216,255,0.95)");
+  g.addColorStop(0.45, "rgba(120,124,240,0.45)");
+  g.addColorStop(1.0, "rgba(80,70,200,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, S, S);
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  _glowTex = tex;
+  return tex;
+}
+
+/* Vertical gradient "sky" texture for scene.background. stops = [[t,'#hex'],..]. */
+function gradientSkyTexture(THREE, stops) {
+  const W = 16, H = 256;
+  const cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  for (const s of stops) g.addColorStop(s[0], s[1]);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.LinearFilter;
+  tex.minFilter = THREE.LinearFilter;
+  return tex;
+}
+
+/* Small round dust/particle sprite (soft white dot). Cached. */
+let _dotTex = null;
+function dotTexture(THREE) {
+  if (_dotTex) return _dotTex;
+  const S = 64;
+  const cv = document.createElement("canvas");
+  cv.width = S; cv.height = S;
+  const ctx = cv.getContext("2d");
+  const g = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  g.addColorStop(0, "rgba(255,255,255,1)");
+  g.addColorStop(0.4, "rgba(220,222,255,0.7)");
+  g.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, S, S);
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  _dotTex = tex;
+  return tex;
+}
+
+/* An additive glow sprite (fake bloom halo). Returns the Sprite. */
+function makeGlow(THREE, color, scale, opacity) {
+  const mat = new THREE.SpriteMaterial({
+    map: radialGlowTexture(THREE),
+    color: new THREE.Color(color),
+    transparent: true,
+    opacity: opacity == null ? 0.8 : opacity,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    depthTest: true,
+  });
+  const s = new THREE.Sprite(mat);
+  s.scale.setScalar(scale || 6);
+  return s;
+}
+
+/* Tron-style perspective grid floor receding to a horizon. Returns a Group
+   plus its disposables. Lines fade with distance via vertex colors. */
+function makeGridFloor(THREE, opts) {
+  opts = opts || {};
+  const half = opts.half || 60;       // extent in X and Z
+  const step = opts.step || 3.2;
+  const y = opts.y == null ? -6 : opts.y;
+  const near = new THREE.Color(opts.colorNear || 0x6366F1);
+  const far = new THREE.Color(opts.colorFar || 0x1b1d52);
+  const positions = [];
+  const colors = [];
+  const pushLine = (x1, z1, x2, z2) => {
+    const fade = (z) => {
+      // brighter near camera (z large +), dim toward horizon (z negative)
+      const t = clamp01((z + half) / (half * 2));
+      const c = far.clone().lerp(near, t * t);
+      return c;
+    };
+    positions.push(x1, y, z1, x2, y, z2);
+    const c1 = fade((z1 + z2) / 2);
+    colors.push(c1.r, c1.g, c1.b, c1.r, c1.g, c1.b);
+  };
+  for (let x = -half; x <= half + 0.001; x += step) pushLine(x, -half, x, half);
+  for (let z = -half; z <= half + 0.001; z += step) pushLine(-half, z, half, z);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  const mat = new THREE.LineBasicMaterial({
+    vertexColors: true, transparent: true, opacity: opts.opacity == null ? 0.55 : opts.opacity,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  const lines = new THREE.LineSegments(geo, mat);
+  return { object: lines, geo, mat };
+}
+
+/* Drifting particle/dust field as a Points cloud. Returns object + arrays. */
+function makeParticleField(THREE, opts) {
+  opts = opts || {};
+  const n = opts.count || 320;
+  const spread = opts.spread || 40;
+  const depth = opts.depth || 60;
+  const pos = new Float32Array(n * 3);
+  const seed = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    pos[i * 3]     = (Math.random() - 0.5) * spread;
+    pos[i * 3 + 1] = (Math.random() - 0.5) * (opts.height || spread * 0.6);
+    pos[i * 3 + 2] = (Math.random() - 0.5) * depth;
+    seed[i] = Math.random() * Math.PI * 2;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({
+    map: dotTexture(THREE),
+    color: new THREE.Color(opts.color || 0x8d92ff),
+    size: opts.size || 0.5,
+    transparent: true,
+    opacity: opts.opacity == null ? 0.7 : opts.opacity,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    sizeAttenuation: true,
+  });
+  const points = new THREE.Points(geo, mat);
+  return { object: points, geo, mat, pos, seed, n };
+}
+
+/* A glowing logo plane: the real DNM icon on an additive/emissive-ish quad
+   with a halo behind it. `behindGlow` makes it read as a bloom watermark.
+   Returns a Group; safe if the texture is null (uses a brand-fallback). */
+function makeLogoPanel(THREE, tex, opts) {
+  opts = opts || {};
+  const grp = new THREE.Group();
+  const size = opts.size || 8;
+
+  // halo behind
+  if (opts.halo !== false) {
+    const halo = makeGlow(THREE, opts.haloColor || 0x6366F1, size * (opts.haloScale || 1.7),
+      opts.haloOpacity == null ? 0.55 : opts.haloOpacity);
+    halo.position.z = -0.05;
+    grp.add(halo);
+    grp._halo = halo;
+  }
+
+  // the logo quad itself
+  const geo = new THREE.PlaneGeometry(size, size);
+  let mat;
+  if (tex) {
+    mat = new THREE.MeshBasicMaterial({
+      map: tex, transparent: true, opacity: opts.opacity == null ? 1 : opts.opacity,
+      depthWrite: false, toneMapped: false,
+      blending: opts.additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+    });
+  } else {
+    // brand fallback: a soft indigo rounded square so a scene still shows
+    // *something* logo-shaped even if the PNG failed to load.
+    mat = new THREE.MeshBasicMaterial({
+      color: 0x4338CA, transparent: true, opacity: 0.85, depthWrite: false,
+    });
+  }
+  const quad = new THREE.Mesh(geo, mat);
+  grp.add(quad);
+  grp._quad = quad; grp._quadGeo = geo; grp._quadMat = mat;
+  grp.userData.dispose = () => {
+    try { geo.dispose(); mat.dispose(); } catch (e) {}
+    if (grp._halo) { try { grp._halo.material.dispose(); } catch (e) {} }
+  };
+  return grp;
 }
 
 /* =====================================================================
@@ -537,8 +835,13 @@ class BaseScene {
 
     this.scene = new T.Scene();
     if (!this.transparent) {
-      this.scene.background = new T.Color(C.bg0);
-      this.scene.fog = new T.Fog(C.bg0, 26, 60);
+      const bg = (this.opts.bgGradient)
+        ? gradientSkyTexture(T, this.opts.bgGradient)
+        : new T.Color(C.bg0);
+      this.scene.background = bg;
+      this._bgTex = (bg && bg.isTexture) ? bg : null;
+      const fogColor = this.opts.fogColor != null ? this.opts.fogColor : C.bg0;
+      this.scene.fog = new T.Fog(fogColor, this.opts.fogNear || 26, this.opts.fogFar || 70);
     }
 
     const rect = host.getBoundingClientRect();
@@ -568,6 +871,7 @@ class BaseScene {
     this._running = false;
     this._visible = true;
     this._inView = true;
+    this._disposed = false;
     this._raf = 0;
     this._last = 0;
     this._t = 0;
@@ -592,10 +896,10 @@ class BaseScene {
 
   _buildLights() {
     const T = THREE;
-    const amb = new T.AmbientLight(0xb8c0d8, 0.55);
+    const amb = new T.AmbientLight(0xb8c0d8, 0.5);
     this.scene.add(amb);
 
-    const key = new T.DirectionalLight(0xffffff, 2.1);
+    const key = new T.DirectionalLight(0xffffff, 2.2);
     key.position.set(6, 12, 10);
     this.scene.add(key);
 
@@ -604,13 +908,18 @@ class BaseScene {
     this.scene.add(fill);
 
     // indigo rim from behind/below for that premium edge glow
-    const rim = new T.DirectionalLight(C.indigoHi, 1.5);
+    const rim = new T.DirectionalLight(C.indigoHi, 1.8);
     rim.position.set(-4, -3, -8);
     this.scene.add(rim);
 
-    const rim2 = new T.PointLight(C.indigo, 0.8, 60);
+    const rim2 = new T.PointLight(C.indigo, 1.1, 60);
     rim2.position.set(0, 6, -10);
     this.scene.add(rim2);
+
+    // a second indigo accent point for richer specular highlights on tiles
+    const accent = new T.PointLight(C.indigoHi, 0.9, 50);
+    accent.position.set(8, -2, 6);
+    this.scene.add(accent);
   }
 
   _resize() {
@@ -660,10 +969,13 @@ class BaseScene {
   update() {}
 
   dispose() {
+    this._disposed = true;
     this.stop();
     window.removeEventListener("resize", this._onResize);
     document.removeEventListener("visibilitychange", this._onVis);
     if (this._io) { try { this._io.disconnect(); } catch (e) {} }
+    try { if (this._envDispose) this._envDispose(); } catch (e) {}
+    try { if (this._bgTex) this._bgTex.dispose(); } catch (e) {}
     try {
       this.scene.traverse((o) => {
         if (o.isMesh) {
@@ -705,9 +1017,11 @@ class TetrisScene extends BaseScene {
 
     this.camera.position.set(0, 0.5, 19.5);
     this.camera.lookAt(0, 0, 0);
+    this._camBaseX = this.camera.position.x;
+    this._camBaseY = this.camera.position.y;
 
-    // a soft floor shadow-catcher plane (subtle)
-    this._addPlinth();
+    // rich animated environment: Tron grid floor + dust + logo watermark
+    this._buildEnv();
 
     this.slots = [];   // fill order: bottom rows first, left->right
     for (let r = 0; r < this.rows; r++) {
@@ -732,19 +1046,74 @@ class TetrisScene extends BaseScene {
     if (!this._running) this.renderOnce();
   }
 
-  _addPlinth() {
+  /* Tron-like grid floor + drifting dust + a large soft DNM-logo glow
+     watermark behind the stack. */
+  _buildEnv() {
     const T = THREE;
-    const geo = new T.PlaneGeometry(60, 30);
-    const mat = new T.MeshStandardMaterial({
-      color: 0x10131a, roughness: 1.0, metalness: 0.0,
-      transparent: true, opacity: this.transparent ? 0.0 : 0.9,
+    const env = new T.Group();
+    this.scene.add(env);
+    this._env = env;
+
+    // perspective grid floor receding to a horizon (tilted slightly so it
+    // reads as a floor plane the stack stands on)
+    const floorY = this.bottomY - this.tileH * 0.7;
+    const grid = makeGridFloor(T, {
+      half: 80, step: 3.4, y: 0,
+      colorNear: 0x8a8eff, colorFar: 0x171a44, opacity: 0.7,
     });
-    const m = new T.Mesh(geo, mat);
-    m.position.set(0, this.bottomY - this.tileH * 0.62, -2);
-    this.scene.add(m);
-    this._plinth = m;
-    this._plinthMat = mat;
-    this._plinthGeo = geo;
+    grid.object.rotation.x = -Math.PI / 2;     // lay flat
+    grid.object.position.set(0, floorY, -10);
+    env.add(grid.object);
+    this._grid = grid;
+
+    // a thin glowing horizon band (bright strip where grid meets sky)
+    const horizonGeo = new T.PlaneGeometry(220, 12);
+    const horizonMat = new T.MeshBasicMaterial({
+      map: radialGlowTexture(T), color: new T.Color(0x6366F1),
+      transparent: true, opacity: 0.6, blending: T.AdditiveBlending,
+      depthWrite: false, depthTest: false,
+    });
+    const horizon = new T.Mesh(horizonGeo, horizonMat);
+    horizon.position.set(0, floorY + 6.5, -78);
+    env.add(horizon);
+    this._horizonMat = horizonMat; this._horizonGeo = horizonGeo;
+
+    // drifting indigo dust
+    const dust = makeParticleField(T, {
+      count: 300, spread: 76, height: 40, depth: 64,
+      color: 0xaab0ff, size: 0.55, opacity: 0.75,
+    });
+    dust.object.position.z = -6;
+    env.add(dust.object);
+    this._dust = dust;
+
+    // a big soft indigo bloom directly behind the stack so it glows
+    const backGlow = makeGlow(T, 0x4f46d6, 34, 0.5);
+    backGlow.position.set(0, this.bottomY + 4, -14);
+    env.add(backGlow);
+    this._backGlow = backGlow;
+
+    // LARGE DNM logo watermark behind the stack (loaded async) — clearly
+    // visible but sitting behind the tiles so it never blocks them
+    ensureLogoTexture(T).then((tex) => {
+      if (this._disposed) return;
+      const panel = makeLogoPanel(T, tex, {
+        size: 20, additive: false, opacity: 0.32,
+        halo: true, haloColor: 0x6366F1, haloScale: 1.35, haloOpacity: 0.55,
+      });
+      panel.position.set(0, this.bottomY + 5.0, -13);
+      env.add(panel);
+      this._logoPanel = panel;
+      if (!this._running) this.renderOnce();
+    });
+
+    this._envDispose = () => {
+      try { grid.geo.dispose(); grid.mat.dispose(); } catch (e) {}
+      try { horizonGeo.dispose(); horizonMat.dispose(); } catch (e) {}
+      try { dust.geo.dispose(); dust.mat.dispose(); } catch (e) {}
+      try { backGlow.material.dispose(); } catch (e) {}
+      try { if (this._logoPanel && this._logoPanel.userData.dispose) this._logoPanel.userData.dispose(); } catch (e) {}
+    };
   }
 
   _makeTile(slotIndex) {
@@ -780,8 +1149,39 @@ class TetrisScene extends BaseScene {
     }
   }
 
+  _animateEnv(dt, time) {
+    // dust slowly rises + recycles; subtle parallax on the logo watermark
+    if (this._dust) {
+      const p = this._dust.pos;
+      for (let i = 0; i < this._dust.n; i++) {
+        let y = p[i * 3 + 1] + dt * (0.35 + (i % 5) * 0.05);
+        if (y > 18) y = -18;
+        p[i * 3 + 1] = y;
+        p[i * 3] += Math.sin(time * 0.4 + this._dust.seed[i]) * dt * 0.18;
+      }
+      this._dust.geo.attributes.position.needsUpdate = true;
+      this._dust.object.rotation.y = Math.sin(time * 0.05) * 0.05;
+    }
+    if (this._horizonMat) this._horizonMat.opacity = 0.42 + Math.sin(time * 1.1) * 0.12;
+    if (this._logoPanel) {
+      this._logoPanel.position.y = this.bottomY + 5.0 + Math.sin(time * 0.5) * 0.25;
+      const op = 0.30 + Math.sin(time * 0.8) * 0.06;
+      if (this._logoPanel._quadMat) this._logoPanel._quadMat.opacity = op;
+    }
+    if (this._backGlow) {
+      const s = 34 + Math.sin(time * 0.9) * 2.5;
+      this._backGlow.scale.setScalar(s);
+    }
+    // gentle cinematic camera drift
+    this.camera.position.x = this._camBaseX + Math.sin(time * 0.18) * 0.8;
+    this.camera.position.y = this._camBaseY + Math.sin(time * 0.24) * 0.35;
+    this.camera.lookAt(0, 0, 0);
+  }
+
   update(dt, time) {
     const T = THREE;
+
+    this._animateEnv(dt, time);
 
     if (this._state === "filling") {
       this._dropTimer += dt;
@@ -873,7 +1273,6 @@ class TetrisScene extends BaseScene {
 
   dispose() {
     try { for (const t of this.tiles) t.dispose(); } catch (e) {}
-    try { this._plinthGeo && this._plinthGeo.dispose(); this._plinthMat && this._plinthMat.dispose(); } catch (e) {}
     super.dispose();
   }
 }
@@ -890,16 +1289,18 @@ class StreamScene extends BaseScene {
 
     this.camera.position.set(0.2, 3.6, 16);
     this.camera.lookAt(0, 0.4, -2);
+    this._camBaseY = 3.6;
 
     this.group = new T.Group();
     this.scene.add(this.group);
 
     this.gateZ = 0;            // ring sits at z = 0
-    this.startZ = -34;         // spawn far
+    this.startZ = -38;         // spawn far
     this.endZ = 14;            // recycle near/past camera
     this.speed = 4.6;          // units/sec toward camera (+z)
 
-    this._buildGate();
+    this._buildTunnel();       // light tunnel the tiles travel through
+    this._buildGate();         // glowing DNM-logo gate
 
     // two lanes for a fuller river
     this.lanes = [-3.0, 3.0];
@@ -918,50 +1319,110 @@ class StreamScene extends BaseScene {
     if (!this._running) this.renderOnce();
   }
 
+  /* A receding tunnel of glowing indigo rings + streaks the tiles fly
+     through toward the gate. Pure additive — reads as light, never blocks. */
+  _buildTunnel() {
+    const T = THREE;
+    const grp = new T.Group();
+    grp.position.set(0, 0.4, 0);
+    this.scene.add(grp);
+    this._tunnel = grp;
+    this._tunnelRings = [];
+    const ringGeo = new T.RingGeometry(6.2, 6.5, 64);
+    this._tunnelRingGeo = ringGeo;
+    this._tunnelMats = [];
+    const N = 14;
+    const span = 42;
+    for (let i = 0; i < N; i++) {
+      // static-frame defaults: spread along depth with a bright middle so the
+      // reduced-motion frame still shows a tunnel (animation overrides these)
+      const z = -i * 3.0;
+      const depth = clamp01((z + span) / span);
+      const mat = new T.MeshBasicMaterial({
+        color: new T.Color(0x6366F1), transparent: true,
+        opacity: 0.05 + Math.sin(depth * Math.PI) * 0.4,
+        blending: T.AdditiveBlending, side: T.DoubleSide, depthWrite: false,
+      });
+      const m = new T.Mesh(ringGeo, mat);
+      m.position.z = z;
+      m.scale.setScalar(0.5 + depth * 0.9);
+      grp.add(m);
+      this._tunnelRings.push(m);
+      this._tunnelMats.push(mat);
+    }
+    // streak lines running along the tunnel walls
+    const streakPos = [];
+    const SR = 7.2, SN = 28;
+    for (let i = 0; i < SN; i++) {
+      const a = (i / SN) * Math.PI * 2;
+      const x = Math.cos(a) * SR, y = Math.sin(a) * SR;
+      streakPos.push(x, y, -42, x, y, 2);
+    }
+    const streakGeo = new T.BufferGeometry();
+    streakGeo.setAttribute("position", new T.Float32BufferAttribute(streakPos, 3));
+    const streakMat = new T.LineBasicMaterial({
+      color: new T.Color(0x4f46d6), transparent: true, opacity: 0.28,
+      blending: T.AdditiveBlending, depthWrite: false,
+    });
+    const streaks = new T.LineSegments(streakGeo, streakMat);
+    grp.add(streaks);
+    this._streakGeo = streakGeo; this._streakMat = streakMat;
+
+    // a faint indigo fog-glow filling the tunnel depth
+    const depthGlow = makeGlow(T, 0x4338CA, 30, 0.35);
+    depthGlow.position.set(0, 0, -30);
+    grp.add(depthGlow);
+    this._depthGlow = depthGlow;
+  }
+
   _buildGate() {
     const T = THREE;
-    const ringGeo = new T.TorusGeometry(4.4, 0.22, 16, 64);
+    const ringGeo = new T.TorusGeometry(4.4, 0.26, 18, 72);
     const ringMat = new T.MeshStandardMaterial({
       color: C.indigoHi, emissive: new T.Color(C.indigo),
-      emissiveIntensity: 1.4, roughness: 0.3, metalness: 0.4,
+      emissiveIntensity: 1.6, roughness: 0.25, metalness: 0.5,
+      toneMapped: true,
     });
     this.ring = new T.Mesh(ringGeo, ringMat);
     this.ring.position.set(0, 0.4, this.gateZ);
     this.scene.add(this.ring);
     this._ringGeo = ringGeo; this._ringMat = ringMat;
 
-    // inner glow disc
+    // additive glow halo wrapping the ring (fake bloom)
+    const ringGlow = makeGlow(T, 0x6366F1, 13, 0.6);
+    ringGlow.position.set(0, 0.4, this.gateZ - 0.2);
+    this.scene.add(ringGlow);
+    this._ringGlow = ringGlow;
+
+    // inner glow disc the tiles pass through (additive so tiles still show)
     const discGeo = new T.CircleGeometry(4.2, 48);
     const discMat = new T.MeshBasicMaterial({
-      color: C.indigo, transparent: true, opacity: 0.14, side: T.DoubleSide,
+      color: new T.Color(0x4f46d6), transparent: true, opacity: 0.16,
+      side: T.DoubleSide, blending: T.AdditiveBlending, depthWrite: false,
     });
     this.disc = new T.Mesh(discGeo, discMat);
-    this.disc.position.copy(this.ring.position);
+    this.disc.position.set(0, 0.4, this.gateZ - 0.05);
     this.scene.add(this.disc);
     this._discGeo = discGeo; this._discMat = discMat;
 
-    // "DNM" label texture on a small plane atop the ring
-    const cv = document.createElement("canvas");
-    cv.width = 256; cv.height = 128;
-    const ctx = cv.getContext("2d");
-    ctx.clearRect(0, 0, 256, 128);
-    ctx.font = "800 64px -apple-system, 'Segoe UI', Inter, Arial, sans-serif";
-    ctx.fillStyle = "#cfd2ff";
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText("DNM", 128, 70);
-    const tex = new T.CanvasTexture(cv);
-    tex.colorSpace = T.SRGBColorSpace;
-    this._labelTex = tex;
-    const lblGeo = new T.PlaneGeometry(3.0, 1.5);
-    const lblMat = new T.MeshBasicMaterial({ map: tex, transparent: true });
-    this.label = new T.Mesh(lblGeo, lblMat);
-    this.label.position.set(0, 5.4, this.gateZ);
-    this.scene.add(this.label);
-    this._lblGeo = lblGeo; this._lblMat = lblMat;
+    // THE DNM LOGO as the gate's glowing crest — sits atop the ring, large
+    // and unmistakable (the "gate" the files pass through). Loaded async.
+    ensureLogoTexture(T).then((tex) => {
+      if (this._disposed) return;
+      const panel = makeLogoPanel(T, tex, {
+        size: 4.2, additive: false, opacity: 0.98,
+        halo: true, haloColor: 0x8a8eff, haloScale: 1.7, haloOpacity: 0.7,
+      });
+      panel.position.set(0, 5.5, this.gateZ);
+      this.scene.add(panel);
+      this._logoPanel = panel;
+      if (!this._running) this.renderOnce();
+    });
 
-    const halo = new T.PointLight(C.indigoHi, 2.2, 24);
+    const halo = new T.PointLight(C.indigoHi, 2.6, 26);
     halo.position.set(0, 0.4, this.gateZ + 0.5);
     this.scene.add(halo);
+    this._gateLight = halo;
   }
 
   _spawn(z) {
@@ -988,10 +1449,44 @@ class StreamScene extends BaseScene {
     }
   }
 
+  _animateTunnel(dt, time) {
+    if (!this._tunnelRings) return;
+    const span = 42;          // tunnel depth
+    for (let i = 0; i < this._tunnelRings.length; i++) {
+      const m = this._tunnelRings[i];
+      let z = m.position.z + dt * 6.0;          // flow toward camera
+      if (z > 3) z -= span;                      // recycle to the back
+      m.position.z = z;
+      // fade in from the far depth, fade out as it reaches the gate plane
+      const depth = clamp01((z + span) / span);  // 0 far → 1 near
+      const fade = Math.sin(depth * Math.PI);     // bright in the middle
+      this._tunnelMats[i].opacity = 0.05 + fade * 0.4;
+      // open up: rings grow as they approach
+      const s = 0.5 + depth * 0.9;
+      m.scale.setScalar(s);
+    }
+    if (this._streakMat) this._streakMat.opacity = 0.22 + Math.sin(time * 1.4) * 0.1;
+    if (this._depthGlow) this._depthGlow.material.opacity = 0.3 + Math.sin(time * 0.9) * 0.1;
+    if (this._tunnel) this._tunnel.rotation.z = Math.sin(time * 0.15) * 0.08;
+  }
+
   update(dt, time) {
     this.ring.rotation.z += dt * 0.4;
-    this._ringMat.emissiveIntensity = 1.2 + Math.sin(time * 2.0) * 0.35;
-    this._discMat.opacity = 0.12 + Math.sin(time * 2.0) * 0.04;
+    this._ringMat.emissiveIntensity = 1.4 + Math.sin(time * 2.0) * 0.45;
+    this._discMat.opacity = 0.2 + Math.sin(time * 2.0) * 0.06;
+    if (this._ringGlow) this._ringGlow.material.opacity = 0.55 + Math.sin(time * 2.0) * 0.18;
+
+    this._animateTunnel(dt, time);
+
+    // logo gate crest: glow pulse + slow hover
+    if (this._logoPanel) {
+      this._logoPanel.position.y = 5.5 + Math.sin(time * 0.7) * 0.16;
+      if (this._logoPanel._halo) this._logoPanel._halo.material.opacity = 0.6 + Math.sin(time * 1.6) * 0.18;
+    }
+    // cinematic camera drift
+    this.camera.position.y = this._camBaseY + Math.sin(time * 0.3) * 0.4;
+    this.camera.position.x = 0.2 + Math.sin(time * 0.22) * 0.5;
+    this.camera.lookAt(0, 0.4, -2);
 
     this._spawnTimer += dt;
     if (this._spawnTimer >= this._spawnEvery && this.tiles.length < 22) {
@@ -1032,9 +1527,16 @@ class StreamScene extends BaseScene {
     try {
       this._ringGeo.dispose(); this._ringMat.dispose();
       this._discGeo.dispose(); this._discMat.dispose();
-      this._lblGeo.dispose(); this._lblMat.dispose();
-      this._labelTex && this._labelTex.dispose();
+      if (this._ringGlow) this._ringGlow.material.dispose();
     } catch (e) {}
+    try {
+      if (this._tunnelRingGeo) this._tunnelRingGeo.dispose();
+      if (this._tunnelMats) for (const m of this._tunnelMats) m.dispose();
+      if (this._streakGeo) this._streakGeo.dispose();
+      if (this._streakMat) this._streakMat.dispose();
+      if (this._depthGlow) this._depthGlow.material.dispose();
+    } catch (e) {}
+    try { if (this._logoPanel && this._logoPanel.userData.dispose) this._logoPanel.userData.dispose(); } catch (e) {}
     super.dispose();
   }
 }
@@ -1051,9 +1553,13 @@ class BurstScene extends BaseScene {
 
     this.camera.position.set(0, 0.5, 21);
     this.camera.lookAt(0, 0, 0);
+    this._camBaseZ = 21;
 
     this.group = new T.Group();
     this.scene.add(this.group);
+
+    // nebula starfield + center DNM logo that glows into focus on convergence
+    this._buildEnv();
 
     this.cols = 4;
     this.rows = 3;
@@ -1092,6 +1598,19 @@ class BurstScene extends BaseScene {
 
     if (reduceMotion) {
       for (const t of this.tiles) { t.mesh.position.copy(t.gridPos); t.mesh.rotation.set(0,0,0); t.setCleanInstant(true); }
+      // freeze the logo in full focus for the static branded frame
+      this._phase = this.PHASE.HOLD;
+      this._logoFocus = 1;
+      if (this._centerGlow) this._centerGlow.material.opacity = 0.7;
+      // re-apply once the async logo texture lands
+      const applyStatic = () => {
+        if (this._logoPanel) {
+          if (this._logoPanel._quadMat) this._logoPanel._quadMat.opacity = 0.92;
+          if (this._logoPanel._halo) this._logoPanel._halo.material.opacity = 0.6;
+        }
+        this.renderOnce();
+      };
+      ensureLogoTexture(THREE).then(applyStatic);
       this.renderOnce();
       return;
     }
@@ -1113,9 +1632,108 @@ class BurstScene extends BaseScene {
     t.spin = new THREE.Vector3((Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.3);
   }
 
+  /* deep starfield + indigo nebula clouds + a center DNM logo that glows
+     into focus when the tiles converge. */
+  _buildEnv() {
+    const T = THREE;
+    const env = new T.Group();
+    this.scene.add(env);
+    this._env = env;
+    this._logoFocus = 0;       // 0 dim → 1 sharp, driven by phase
+
+    // far starfield (deep, slow parallax)
+    const stars = makeParticleField(T, {
+      count: 520, spread: 120, height: 90, depth: 90,
+      color: 0xc7caff, size: 0.42, opacity: 0.85,
+    });
+    stars.object.position.z = -30;
+    env.add(stars.object);
+    this._stars = stars;
+
+    // a nearer, brighter indigo dust layer
+    const dust = makeParticleField(T, {
+      count: 240, spread: 70, height: 46, depth: 50,
+      color: 0x8d92ff, size: 0.6, opacity: 0.6,
+    });
+    dust.object.position.z = -8;
+    env.add(dust.object);
+    this._dust2 = dust;
+
+    // soft nebula glow clouds behind the action
+    const neb1 = makeGlow(T, 0x4338CA, 46, 0.4);
+    neb1.position.set(-10, 4, -28);
+    env.add(neb1);
+    const neb2 = makeGlow(T, 0x6366F1, 38, 0.32);
+    neb2.position.set(12, -6, -24);
+    env.add(neb2);
+    this._neb1 = neb1; this._neb2 = neb2;
+
+    // the center DNM logo — glows into focus at convergence, grid forms
+    // around it. Sits just behind the grid plane so tiles read in front.
+    const centerGlow = makeGlow(T, 0x6366F1, 16, 0.0);
+    centerGlow.position.set(0, 0, -2.5);
+    env.add(centerGlow);
+    this._centerGlow = centerGlow;
+
+    ensureLogoTexture(T).then((tex) => {
+      if (this._disposed) return;
+      const panel = makeLogoPanel(T, tex, {
+        size: 7.5, additive: false, opacity: 0.0,
+        halo: true, haloColor: 0x6366F1, haloScale: 1.5, haloOpacity: 0.0,
+      });
+      panel.position.set(0, 0, -3);
+      env.add(panel);
+      this._logoPanel = panel;
+      if (!this._running) this.renderOnce();
+    });
+
+    this._envDispose = () => {
+      try { stars.geo.dispose(); stars.mat.dispose(); } catch (e) {}
+      try { dust.geo.dispose(); dust.mat.dispose(); } catch (e) {}
+      try { neb1.material.dispose(); neb2.material.dispose(); } catch (e) {}
+      try { centerGlow.material.dispose(); } catch (e) {}
+      try { if (this._logoPanel && this._logoPanel.userData.dispose) this._logoPanel.userData.dispose(); } catch (e) {}
+    };
+  }
+
+  /* map the phase timeline → logo focus 0..1 (dim while scattered, sharp at
+     hold) and apply it to the center logo + glow. */
+  _applyLogoFocus(dt, time) {
+    let target = 0;
+    if (this._phase === this.PHASE.CONVERGE) target = clamp01(this._pt / this.tConverge);
+    else if (this._phase === this.PHASE.HOLD) target = 1;
+    else if (this._phase === this.PHASE.RELEASE) target = 1 - clamp01(this._pt / this.tRelease);
+    else target = 0; // DRIFT
+    // smooth toward target
+    this._logoFocus += (target - this._logoFocus) * Math.min(1, dt * 6);
+    const f = this._logoFocus;
+    if (this._logoPanel) {
+      if (this._logoPanel._quadMat) this._logoPanel._quadMat.opacity = f * 0.92;
+      if (this._logoPanel._halo) this._logoPanel._halo.material.opacity = f * 0.6;
+      const s = 0.85 + f * 0.2;
+      this._logoPanel.scale.setScalar(s);
+      this._logoPanel.position.y = Math.sin(time * 0.5) * 0.12;
+    }
+    if (this._centerGlow) {
+      this._centerGlow.material.opacity = f * 0.7 + Math.sin(time * 2.0) * 0.05 * f;
+      this._centerGlow.scale.setScalar(16 + Math.sin(time * 1.2) * 1.5);
+    }
+    // nebula + star drift for life
+    if (this._stars) this._stars.object.rotation.z = time * 0.01;
+    if (this._dust2) this._dust2.object.rotation.z = -time * 0.02;
+    if (this._neb1) this._neb1.material.opacity = 0.36 + Math.sin(time * 0.6) * 0.06;
+    if (this._neb2) this._neb2.material.opacity = 0.28 + Math.sin(time * 0.8 + 1) * 0.06;
+  }
+
   update(dt, time) {
     this._pt += dt;
     this.group.rotation.y = Math.sin(time * 0.18) * 0.18;
+
+    this._applyLogoFocus(dt, time);
+    // slow cinematic dolly
+    this.camera.position.z = this._camBaseZ + Math.sin(time * 0.16) * 1.0;
+    this.camera.position.x = Math.sin(time * 0.12) * 0.7;
+    this.camera.lookAt(0, 0, 0);
 
     if (this._phase === this.PHASE.DRIFT) {
       for (const t of this.tiles) {
@@ -1198,6 +1816,26 @@ class BurstScene extends BaseScene {
    ===================================================================== */
 const VARIANTS = { tetris: TetrisScene, stream: StreamScene, burst: BurstScene };
 
+/* per-scene environment options → distinct sky + fog so the 3 scenes read
+   as visually different pages */
+const ENV = {
+  tetris: {
+    transparent: false,
+    bgGradient: [[0,"#0b0c11"],[0.45,"#13151d"],[0.7,"#191b3a"],[1,"#0d0e16"]],
+    fogColor: 0x0d0e16, fogNear: 30, fogFar: 78,
+  },
+  stream: {
+    transparent: false,
+    bgGradient: [[0,"#0a0b10"],[0.5,"#14162a"],[1,"#0a0b10"]],
+    fogColor: 0x0a0b12, fogNear: 18, fogFar: 60,
+  },
+  burst: {
+    transparent: false,
+    bgGradient: [[0,"#08090d"],[0.5,"#101327"],[1,"#08090d"]],
+    fogColor: 0x090a12, fogNear: 26, fogFar: 80,
+  },
+};
+
 async function mountAll() {
   await ensureThree();
   const hosts = document.querySelectorAll("[data-dnm-motion]");
@@ -1208,7 +1846,7 @@ async function mountAll() {
     if (!Klass) return;
     host.__dnmMounted = true;
     try {
-      const inst = new Klass(host, { transparent: false });
+      const inst = new Klass(host, ENV[kind] || { transparent: false });
       host.__dnmInstance = inst;
     } catch (e) {
       host.__dnmMounted = false;
