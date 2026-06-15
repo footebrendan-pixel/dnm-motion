@@ -94,11 +94,55 @@
      This keeps the flashy art edge-to-edge while guaranteeing the heading
      has dedicated, art-light real estate on the left. */
   .dnm-stage {
-    position: absolute;
+    position: absolute;   /* containing block for the corner brand badge */
     inset: 0;
-    z-index: 0;
+    /* z-index:auto (no stacking context) so the .dnm-badge inside can rise
+       ABOVE the scrim/overlay while the canvas itself stays behind them */
+    z-index: auto;
   }
   .dnm-stage canvas { display: block; }
+
+  /* ---- fixed corner brand badge: small, crisp, always above the canvas
+     and the moving 3D tiles. Lives inside .dnm-stage so it anchors to the
+     scene's canvas area in every layout (and tracks the canvas when it
+     reflows below the copy on narrow screens). ---- */
+  .dnm-badge {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    z-index: 3;                 /* above scrim (1) and copy overlay (2) */
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 13px 6px 8px;
+    border-radius: 999px;
+    background: rgba(14, 15, 20, 0.55);
+    border: 1px solid rgba(99, 102, 241, 0.55);
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.30), 0 2px 10px rgba(0, 0, 0, 0.45);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+    user-select: none;
+  }
+  .dnm-badge img {
+    display: block;
+    height: 36px;
+    width: auto;
+    filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.45));
+  }
+  .dnm-badge .dnm-badge-word {
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: #F4F5F7;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+  }
+  @media (max-width: 860px) {
+    .dnm-badge { top: 14px; left: 14px; padding: 5px 12px 5px 7px; }
+    .dnm-badge img { height: 32px; }
+    .dnm-badge .dnm-badge-word { font-size: 18px; }
+  }
 
   /* soft cinematic vignette + a left-side scrim so copy always stays legible
      over whatever the canvas renders behind it */
@@ -218,7 +262,12 @@
 
   <!-- A) NAMING TETRIS (hero candidate) -->
   <section class="dnm-section scene-tetris">
-    <div class="dnm-stage" data-dnm-motion="tetris"></div>
+    <div class="dnm-stage" data-dnm-motion="tetris">
+      <div class="dnm-badge" aria-label="DNM">
+        <img src="./dnm-logo.png" alt="DNM logo" width="36" height="36" />
+        <span class="dnm-badge-word">DNM</span>
+      </div>
+    </div>
     <div class="dnm-overlay">
       <span class="tag">Variant A · the star</span>
       <h2>Naming Tetris</h2>
@@ -228,7 +277,12 @@
 
   <!-- B) NAMING STREAM -->
   <section class="dnm-section scene-stream">
-    <div class="dnm-stage" data-dnm-motion="stream"></div>
+    <div class="dnm-stage" data-dnm-motion="stream">
+      <div class="dnm-badge" aria-label="DNM">
+        <img src="./dnm-logo.png" alt="DNM logo" width="36" height="36" />
+        <span class="dnm-badge-word">DNM</span>
+      </div>
+    </div>
     <div class="dnm-overlay">
       <span class="tag">Variant B</span>
       <h2>Naming Stream</h2>
@@ -238,7 +292,12 @@
 
   <!-- C) ORDER FROM CHAOS -->
   <section class="dnm-section scene-burst">
-    <div class="dnm-stage" data-dnm-motion="burst"></div>
+    <div class="dnm-stage" data-dnm-motion="burst">
+      <div class="dnm-badge" aria-label="DNM">
+        <img src="./dnm-logo.png" alt="DNM logo" width="36" height="36" />
+        <span class="dnm-badge-word">DNM</span>
+      </div>
+    </div>
     <div class="dnm-overlay">
       <span class="tag">Variant C</span>
       <h2>Order from Chaos</h2>
@@ -1093,26 +1152,15 @@ class TetrisScene extends BaseScene {
     env.add(backGlow);
     this._backGlow = backGlow;
 
-    // LARGE DNM logo watermark behind the stack (loaded async) — clearly
-    // visible but sitting behind the tiles so it never blocks them
-    ensureLogoTexture(T).then((tex) => {
-      if (this._disposed) return;
-      const panel = makeLogoPanel(T, tex, {
-        size: 11, additive: false, opacity: 0.42,
-        halo: true, haloColor: 0x6366F1, haloScale: 1.35, haloOpacity: 0.55,
-      });
-      panel.position.set(0, this.bottomY + 12.0, -13);
-      env.add(panel);
-      this._logoPanel = panel;
-      if (!this._running) this.renderOnce();
-    });
+    // (The DNM brand mark now lives as a fixed HTML badge in the corner of
+    // this scene — see .dnm-badge — so it can never be blocked by the tiles.
+    // No in-scene 3D logo panel is created here.)
 
     this._envDispose = () => {
       try { grid.geo.dispose(); grid.mat.dispose(); } catch (e) {}
       try { horizonGeo.dispose(); horizonMat.dispose(); } catch (e) {}
       try { dust.geo.dispose(); dust.mat.dispose(); } catch (e) {}
       try { backGlow.material.dispose(); } catch (e) {}
-      try { if (this._logoPanel && this._logoPanel.userData.dispose) this._logoPanel.userData.dispose(); } catch (e) {}
     };
   }
 
@@ -1163,11 +1211,6 @@ class TetrisScene extends BaseScene {
       this._dust.object.rotation.y = Math.sin(time * 0.05) * 0.05;
     }
     if (this._horizonMat) this._horizonMat.opacity = 0.42 + Math.sin(time * 1.1) * 0.12;
-    if (this._logoPanel) {
-      this._logoPanel.position.y = this.bottomY + 12.0 + Math.sin(time * 0.5) * 0.25;
-      const op = 0.30 + Math.sin(time * 0.8) * 0.06;
-      if (this._logoPanel._quadMat) this._logoPanel._quadMat.opacity = op;
-    }
     if (this._backGlow) {
       const s = 34 + Math.sin(time * 0.9) * 2.5;
       this._backGlow.scale.setScalar(s);
@@ -1405,19 +1448,9 @@ class StreamScene extends BaseScene {
     this.scene.add(this.disc);
     this._discGeo = discGeo; this._discMat = discMat;
 
-    // THE DNM LOGO as the gate's glowing crest — sits atop the ring, large
-    // and unmistakable (the "gate" the files pass through). Loaded async.
-    ensureLogoTexture(T).then((tex) => {
-      if (this._disposed) return;
-      const panel = makeLogoPanel(T, tex, {
-        size: 4.2, additive: false, opacity: 0.98,
-        halo: true, haloColor: 0x8a8eff, haloScale: 1.7, haloOpacity: 0.7,
-      });
-      panel.position.set(0, 5.5, this.gateZ);
-      this.scene.add(panel);
-      this._logoPanel = panel;
-      if (!this._running) this.renderOnce();
-    });
+    // (The DNM brand mark now lives as a fixed HTML badge in the corner of
+    // this scene — see .dnm-badge — instead of a 3D crest above the ring, so
+    // the flowing tiles can never pass over and block it.)
 
     const halo = new T.PointLight(C.indigoHi, 2.6, 26);
     halo.position.set(0, 0.4, this.gateZ + 0.5);
@@ -1478,11 +1511,6 @@ class StreamScene extends BaseScene {
 
     this._animateTunnel(dt, time);
 
-    // logo gate crest: glow pulse + slow hover
-    if (this._logoPanel) {
-      this._logoPanel.position.y = 5.5 + Math.sin(time * 0.7) * 0.16;
-      if (this._logoPanel._halo) this._logoPanel._halo.material.opacity = 0.6 + Math.sin(time * 1.6) * 0.18;
-    }
     // cinematic camera drift
     this.camera.position.y = this._camBaseY + Math.sin(time * 0.3) * 0.4;
     this.camera.position.x = 0.2 + Math.sin(time * 0.22) * 0.5;
@@ -1536,7 +1564,6 @@ class StreamScene extends BaseScene {
       if (this._streakMat) this._streakMat.dispose();
       if (this._depthGlow) this._depthGlow.material.dispose();
     } catch (e) {}
-    try { if (this._logoPanel && this._logoPanel.userData.dispose) this._logoPanel.userData.dispose(); } catch (e) {}
     super.dispose();
   }
 }
@@ -1598,19 +1625,11 @@ class BurstScene extends BaseScene {
 
     if (reduceMotion) {
       for (const t of this.tiles) { t.mesh.position.copy(t.gridPos); t.mesh.rotation.set(0,0,0); t.setCleanInstant(true); }
-      // freeze the logo in full focus for the static branded frame
+      // hold the aligned grid + center glow for the static branded frame.
+      // (The DNM brand mark itself is the fixed HTML badge in the corner.)
       this._phase = this.PHASE.HOLD;
       this._logoFocus = 1;
       if (this._centerGlow) this._centerGlow.material.opacity = 0.7;
-      // re-apply once the async logo texture lands
-      const applyStatic = () => {
-        if (this._logoPanel) {
-          if (this._logoPanel._quadMat) this._logoPanel._quadMat.opacity = 0.92;
-          if (this._logoPanel._halo) this._logoPanel._halo.material.opacity = 0.6;
-        }
-        this.renderOnce();
-      };
-      ensureLogoTexture(THREE).then(applyStatic);
       this.renderOnce();
       return;
     }
@@ -1668,31 +1687,19 @@ class BurstScene extends BaseScene {
     env.add(neb2);
     this._neb1 = neb1; this._neb2 = neb2;
 
-    // the center DNM logo — glows into focus at convergence, grid forms
-    // around it. Sits just behind the grid plane so tiles read in front.
+    // a soft center glow that blooms into focus at convergence so the grid
+    // forms around a warm core. (The DNM brand mark itself is now the fixed
+    // HTML badge in the corner — no in-scene 3D logo panel here.)
     const centerGlow = makeGlow(T, 0x6366F1, 16, 0.0);
     centerGlow.position.set(0, 0, -2.5);
     env.add(centerGlow);
     this._centerGlow = centerGlow;
-
-    ensureLogoTexture(T).then((tex) => {
-      if (this._disposed) return;
-      const panel = makeLogoPanel(T, tex, {
-        size: 7.5, additive: false, opacity: 0.0,
-        halo: true, haloColor: 0x6366F1, haloScale: 1.5, haloOpacity: 0.0,
-      });
-      panel.position.set(0, 0, -3);
-      env.add(panel);
-      this._logoPanel = panel;
-      if (!this._running) this.renderOnce();
-    });
 
     this._envDispose = () => {
       try { stars.geo.dispose(); stars.mat.dispose(); } catch (e) {}
       try { dust.geo.dispose(); dust.mat.dispose(); } catch (e) {}
       try { neb1.material.dispose(); neb2.material.dispose(); } catch (e) {}
       try { centerGlow.material.dispose(); } catch (e) {}
-      try { if (this._logoPanel && this._logoPanel.userData.dispose) this._logoPanel.userData.dispose(); } catch (e) {}
     };
   }
 
@@ -1704,16 +1711,9 @@ class BurstScene extends BaseScene {
     else if (this._phase === this.PHASE.HOLD) target = 1;
     else if (this._phase === this.PHASE.RELEASE) target = 1 - clamp01(this._pt / this.tRelease);
     else target = 0; // DRIFT
-    // smooth toward target
+    // smooth toward target — now drives only the center bloom + nebula life
     this._logoFocus += (target - this._logoFocus) * Math.min(1, dt * 6);
     const f = this._logoFocus;
-    if (this._logoPanel) {
-      if (this._logoPanel._quadMat) this._logoPanel._quadMat.opacity = f * 0.92;
-      if (this._logoPanel._halo) this._logoPanel._halo.material.opacity = f * 0.6;
-      const s = 0.85 + f * 0.2;
-      this._logoPanel.scale.setScalar(s);
-      this._logoPanel.position.y = Math.sin(time * 0.5) * 0.12;
-    }
     if (this._centerGlow) {
       this._centerGlow.material.opacity = f * 0.7 + Math.sin(time * 2.0) * 0.05 * f;
       this._centerGlow.scale.setScalar(16 + Math.sin(time * 1.2) * 1.5);
