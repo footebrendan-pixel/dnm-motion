@@ -250,6 +250,63 @@
   @media (prefers-reduced-motion: reduce) {
     .dnm-section { animation: none !important; }
   }
+
+  /* =====================================================================
+     EMBED MODE  —  index.html?only=tetris|stream|burst
+     A single scene is iframed full-bleed into a marketing page. The page
+     supplies its own heading, so only the animated canvas + the small
+     corner .dnm-badge are shown. Driven entirely by the `embed-only` class
+     on <html> plus a `dnm-embed-target` marker on the chosen section (set
+     by the bootstrap script) — no scattered inline styles.
+     ===================================================================== */
+  html.embed-only,
+  html.embed-only body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  /* chrome + sibling scenes never render in embed mode */
+  html.embed-only .page-head,
+  html.embed-only .page-foot,
+  html.embed-only .dnm-section:not(.dnm-embed-target) {
+    display: none !important;
+  }
+  /* the target scene fills the iframe viewport, no surrounding margins */
+  html.embed-only .dnm-section.dnm-embed-target {
+    width: 100%;
+    height: 100vh;
+    min-height: 100vh;
+    border-top: 0;
+    margin: 0;
+    /* single column: the overlay copy is hidden, so the canvas owns it all */
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+  }
+  html.embed-only .dnm-section.dnm-embed-target .dnm-stage {
+    position: absolute;
+    inset: 0;
+    grid-row: 1;
+    grid-column: 1;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+  /* the marketing page provides the heading — hide the in-scene copy, keep
+     the corner .dnm-badge (it lives inside .dnm-stage, not .dnm-overlay) */
+  html.embed-only .dnm-section.dnm-embed-target .dnm-overlay {
+    display: none !important;
+  }
+  @media (max-width: 860px) {
+    html.embed-only .dnm-section.dnm-embed-target {
+      grid-template-rows: 1fr;
+      min-height: 100vh;
+      height: 100vh;
+    }
+    html.embed-only .dnm-section.dnm-embed-target .dnm-stage {
+      grid-row: 1;
+      min-height: 0;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1835,6 +1892,45 @@ const ENV = {
     fogColor: 0x090a12, fogNear: 26, fogFar: 80,
   },
 };
+
+/* =====================================================================
+   EMBED MODE bootstrap  —  index.html?only=tetris|stream|burst
+   Marketing pages iframe a SINGLE scene full-bleed. When a valid `only`
+   param is present we:
+     • tag <html> with `embed-only` and the chosen .dnm-section with
+       `dnm-embed-target` so the CSS above hides chrome + sibling scenes and
+       makes the target fill the viewport (the page supplies its own copy);
+     • CRITICALLY, strip `data-dnm-motion` from the two NON-target hosts so
+       the mount manager creates exactly ONE WebGLRenderer / <canvas>.
+   Runs synchronously, before mountAll(), and never throws into the page.
+   ===================================================================== */
+function applyEmbedMode() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const only = params.get("only");
+    if (!only || !Object.prototype.hasOwnProperty.call(VARIANTS, only)) return;
+
+    document.documentElement.classList.add("embed-only");
+
+    const hosts = document.querySelectorAll("[data-dnm-motion]");
+    hosts.forEach((host) => {
+      if (host.getAttribute("data-dnm-motion") === only) {
+        // mark the owning section so the CSS can full-bleed just this one
+        const section = host.closest(".dnm-section");
+        if (section) section.classList.add("dnm-embed-target");
+      } else {
+        // remove the attr so the mount manager skips it → no extra context
+        host.removeAttribute("data-dnm-motion");
+      }
+    });
+  } catch (e) {
+    // never break the page; on any failure fall back to the full showcase
+    try { console.error("[dnm-motion] embed mode error", e); } catch (e2) {}
+  }
+}
+
+// must run before the mount manager so only the target host is mounted
+applyEmbedMode();
 
 async function mountAll() {
   await ensureThree();
